@@ -1131,12 +1131,7 @@ class Signatory(object):
     All my state is encapsulated in an
     L{OpenIDStore<openid.store.interface.OpenIDStore>}, which means
     I'm not generally pickleable but I am easy to reconstruct.
-
-    @cvar SECRET_LIFETIME: The number of seconds a secret remains valid.
-    @type SECRET_LIFETIME: int
     """
-
-    SECRET_LIFETIME = 14 * 24 * 60 * 60 # 14 days, in seconds
 
     # keys have a bogus server URL in them because the filestore
     # really does expect that key to be a URL.  This seems a little
@@ -1146,7 +1141,7 @@ class Signatory(object):
     _dumb_key = 'http://localhost/|dumb'
 
 
-    def __init__(self, store):
+    def __init__(self, store, secretLifetime=1209600):
         """Create a new Signatory.
 
         @param store: The back-end where my associations are stored.
@@ -1154,6 +1149,8 @@ class Signatory(object):
         """
         assert store is not None
         self.store = store
+        # default 14 days, in seconds
+        self.SECRET_LIFETIME = secretLifetime
 
 
     def verify(self, assoc_handle, message):
@@ -1510,6 +1507,7 @@ class Server(object):
         self,
         store,
         op_endpoint=None,
+        secretLifetime=1209600,
         signatoryClass=Signatory, 
         encoderClass=SigningEncoder, 
         decoderClass=Decoder):
@@ -1528,7 +1526,7 @@ class Server(object):
             if you want to respond to any version 2 OpenID requests.
         """
         self.store = store
-        self.signatory = signatoryClass(self.store)
+        self.signatory = signatoryClass(self.store, secretLifetime=secretLifetime)
         self.encoder = encoderClass(self.signatory)
         self.decoder = decoderClass(self)
         self.negotiator = default_negotiator.copy()
